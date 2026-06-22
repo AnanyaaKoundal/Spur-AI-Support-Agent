@@ -4,8 +4,8 @@ import { chatMessageSchema } from '../../validators/chat.validator.js';
 import { handleMessage, getConversations, getConversationMessages } from '../../services/chat.service.js';
 
 const messageLimiter = rateLimit({
-  windowMs: 10 * 1000,
-  max: 1,
+  windowMs: 60 * 1000,
+  max: 20,
   standardHeaders: true,
   legacyHeaders: true,
   message: { reply: null, sessionId: null, error: 'Please wait a moment before sending another message.' },
