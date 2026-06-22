@@ -30,7 +30,7 @@ describe('handleMessage — title generation', () => {
   });
 
   it('generates a title for new conversations and stores it', async () => {
-    const mockConversation = { id: 'conv-1', title: 'New conversation' };
+    const mockConversation = { id: 'conv-1', title: 'New conversation', createdAt: new Date() };
 
     vi.mocked(prisma.conversation.create).mockResolvedValue(mockConversation);
     vi.mocked(prisma.conversation.update).mockResolvedValue({
