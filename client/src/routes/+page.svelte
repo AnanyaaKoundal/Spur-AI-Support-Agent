@@ -16,6 +16,7 @@
   let isTyping = $state(false);
   let showWelcome = $state(true);
   let isLoadingMessages = $state(false);
+  let isLoadingConversations = $state(true);
   let failedMessage = $state<{ text: string; messageId: string; body: string; retryAfter: number } | null>(null);
   let retryCountdown = $state(0);
 
@@ -30,11 +31,14 @@
   // ── API helpers ──
 
   async function loadConversations() {
+    isLoadingConversations = true;
     try {
       const res = await chatApi.getConversations();
       conversations = res.data;
     } catch {
       // Silently fail — conversations will be empty
+    } finally {
+      isLoadingConversations = false;
     }
   }
 
@@ -57,14 +61,13 @@
   // ── Initialization ──
 
   if (browser) {
-    loadConversations().then(() => {
-      const urlId = new URL(window.location.href).searchParams.get('c');
-      if (urlId && conversations.find((c) => c.id === urlId)) {
-        activeConversationId = urlId;
-        showWelcome = false;
-        loadMessages(urlId);
-      }
-    });
+    const urlId = new URL(window.location.href).searchParams.get('c');
+    if (urlId) {
+      activeConversationId = urlId;
+      showWelcome = false;
+      loadMessages(urlId);
+    }
+    loadConversations();
   }
 
   // ── URL sync ──
@@ -269,6 +272,7 @@
   <Sidebar
     {conversations}
     activeId={activeConversationId ?? ''}
+    loading={isLoadingConversations}
     onNewChat={startNewChat}
     onSelect={selectConversation}
     class="hidden lg:flex"
@@ -291,6 +295,7 @@
       <Sidebar
         {conversations}
         activeId={activeConversationId ?? ''}
+        loading={isLoadingConversations}
         onNewChat={startNewChat}
         onSelect={selectConversation}
       />
@@ -399,6 +404,10 @@
               </div>
             </div>
           {/if}
+        </div>
+      {:else if activeConversationId}
+        <div class="flex flex-1 items-center justify-center text-sm text-surface-400">
+          No messages yet
         </div>
       {:else}
         <div class="flex-1">

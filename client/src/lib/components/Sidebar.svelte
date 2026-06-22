@@ -4,12 +4,14 @@
   let {
     conversations = [],
     activeId = '',
+    loading = false,
     onNewChat,
     onSelect,
     class: className = '',
   }: {
     conversations: Conversation[];
     activeId: string;
+    loading: boolean;
     onNewChat: () => void;
     onSelect: (id: string) => void;
     class?: string;
@@ -40,7 +42,9 @@
 
   <!-- Conversations -->
   <div class="flex-1 overflow-y-auto px-3 pb-3">
-    {#if conversations.length === 0}
+    {#if loading}
+      <p class="mt-8 text-center text-xs text-surface-400">Loading conversations...</p>
+    {:else if conversations.length === 0}
       <p class="mt-8 text-center text-xs text-surface-400">No conversations yet</p>
     {/if}
 
