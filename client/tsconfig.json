@@ -1,0 +1,25 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowJs": true,
+    "checkJs": true,
+    "sourceMap": true,
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    ".svelte-kit/ambient.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}
