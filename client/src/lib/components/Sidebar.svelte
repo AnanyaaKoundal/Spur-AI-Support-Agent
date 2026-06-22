@@ -21,9 +21,7 @@
 <aside class="flex h-full w-[260px] shrink-0 flex-col border-r border-surface-200 bg-white {className}">
   <!-- Brand -->
   <div class="flex items-center gap-2.5 border-b border-surface-100 px-5 py-4">
-    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-sm font-bold text-white">
-      S
-    </div>
+    <img src="/favicon.jpg" alt="Spur" class="h-8 w-8 rounded-lg object-cover" />
     <span class="text-base font-semibold text-surface-800">Spur</span>
   </div>
 

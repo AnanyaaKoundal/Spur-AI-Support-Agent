@@ -52,9 +52,7 @@
 
     <div class="flex items-end gap-2 {isUser ? 'flex-row-reverse' : 'flex-row'}">
       {#if !isUser}
-        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-bold text-white">
-          S
-        </div>
+        <img src="/favicon.jpg" alt="Spur" class="h-8 w-8 shrink-0 rounded-full object-cover" />
       {/if}
 
       <div
