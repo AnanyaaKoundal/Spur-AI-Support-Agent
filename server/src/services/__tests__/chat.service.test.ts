@@ -53,7 +53,7 @@ describe('handleMessage — title generation', () => {
   });
 
   it('does not generate title for existing conversations', async () => {
-    const existingConv = { id: 'conv-existing', title: 'Old Title' };
+    const existingConv = { id: 'conv-existing', title: 'Old Title', createdAt: new Date() };
 
     vi.mocked(prisma.conversation.findUnique).mockResolvedValue(existingConv);
     vi.mocked(generateReply).mockResolvedValue('Thanks for your question...');
