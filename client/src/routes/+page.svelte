@@ -46,13 +46,16 @@
     isLoadingMessages = true;
     try {
       const res = await chatApi.getMessages(convId);
-      // Ensure conversation exists in sidebar
       if (!conversations.find((c) => c.id === convId)) {
         conversations = [res.data.conversation, ...conversations];
       }
       messagesByConversation[convId] = res.data.messages;
-    } catch {
-      // Silently fail — messages will be empty
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) {
+        activeConversationId = null;
+        showWelcome = true;
+        syncUrl(null);
+      }
     } finally {
       isLoadingMessages = false;
     }
