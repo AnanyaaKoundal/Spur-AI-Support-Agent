@@ -163,6 +163,21 @@ Additional implementation details can be found in [ARCHITECTURE.md](ARCHITECTURE
 
 ---
 
+## LLM Notes
+
+**Provider**: OpenAI ( Model: gpt-4o-mini )
+
+**Prompting approach**: The system prompt is built dynamically on every request by loading store policies from the database and injecting them as context. This avoids hardcoding business rules in the prompt itself. The prompt includes:
+
+- The agent's role as a Spur Shop support representative
+- Response guidelines (under 150 words, ask for order numbers, etc.)
+- A strict scope limitation that explicitly lists off-topic categories (programming, finance, health, etc.) with example refusal dialogs
+- All store policies appended as `--- Title ---\ncontent` blocks
+
+Conversation history is limited to the last 20 messages for context. Title generation uses a separate, lighter call (`max_tokens: 20, temperature: 0.3`) isolated from the reply flow so failures there never affect the primary chat.
+
+---
+
 ## Design Decisions
 
 | Decision                                                        | Why it was implemented                                                                                                                                                                                                                                                                                         |
