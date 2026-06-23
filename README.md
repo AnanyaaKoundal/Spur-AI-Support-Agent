@@ -12,6 +12,7 @@ An AI-powered customer support application built for an e-commerce store. The pr
 | [Key Features](#key-features) | Core capabilities delivered by the application |
 | [User Interface Approach](#user-interface-approach) | UI design choices and user experience rationale |
 | [Architecture Overview](#architecture-overview) | High-level system architecture and layers |
+| [LLM Notes](#llm-notes) | Provider, prompting approach, and configuration |
 | [Design Decisions](#design-decisions) | Notable engineering and implementation decisions |
 | [Technology Stack](#technology-stack) | Frameworks, libraries, and services used |
 | [Project Structure](#project-structure) | Repository layout and code organization |
