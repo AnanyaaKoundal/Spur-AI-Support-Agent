@@ -1,4 +1,4 @@
-# Spur AI Support — Architecture Deep-Dive
+# Spur AI Support - Architecture Deep-Dive
 
 This document provides a detailed overview of the architectural decisions, data flow, backend structure, frontend design, and implementation choices behind Spur AI Support.
 
@@ -79,7 +79,7 @@ project-root/
 └── ARCHITECTURE.md
 ```
 
-Frontend and backend are fully independent — separate `package.json`, separate TypeScript configs, no monorepo workspace, no shared dependencies. They communicate over HTTP and are deployed separately (e.g., frontend on Vercel, backend on Render, database on Neon).
+Frontend and backend are fully independent - separate `package.json`, separate TypeScript configs, no monorepo workspace, no shared dependencies. They communicate over HTTP and are deployed separately (e.g., frontend on Vercel, backend on Render, database on Neon).
 
 ---
 
@@ -87,18 +87,18 @@ Frontend and backend are fully independent — separate `package.json`, separate
 
 ### 2.1 Entry Point
 
-`server/src/index.ts` — Minimal bootstrap:
+`server/src/index.ts` - Minimal bootstrap:
 
 1. Imports the Express `app` from `app.ts`
 2. Loads env config (which triggers `dotenv.config()`)
 3. Connects Prisma to PostgreSQL via `prisma.$connect()`
 4. Starts Express on `env.port` (from `process.env.PORT` or defaults to `3001`)
 
-No clustering, no middleware setup at this level — all of that lives in `app.ts`.
+No clustering, no middleware setup at this level - all of that lives in `app.ts`.
 
 ### 2.2 Express App
 
-`server/src/app.ts` — Middleware stack:
+`server/src/app.ts` - Middleware stack:
 
 | Middleware | Purpose |
 |---|---|
@@ -127,9 +127,9 @@ Each channel is responsible for:
 - Formatting the response for its platform
 - Handling platform-specific errors
 
-Adding WhatsApp or Instagram means creating `channels/whatsapp/whatsapp.channel.ts` with its own rate limiting, validation, and response formatting — no existing code changes.
+Adding WhatsApp or Instagram means creating `channels/whatsapp/whatsapp.channel.ts` with its own rate limiting, validation, and response formatting - no existing code changes.
 
-#### `web.channel.ts` — Endpoints
+#### `web.channel.ts` - Endpoints
 
 Three endpoints (no `/api` prefix):
 
@@ -139,11 +139,11 @@ GET    /chat/conversations/:id/messages      → conversation + messages (max 10
 POST   /chat/message                         → send message, get AI reply (rate-limited)
 ```
 
-**`GET /chat/conversations`** — Calls `getConversations()` from `chat.service.ts`, returns `{ data: Conversation[] }`.
+**`GET /chat/conversations`** - Calls `getConversations()` from `chat.service.ts`, returns `{ data: Conversation[] }`.
 
-**`GET /chat/conversations/:id/messages`** — Calls `getConversationMessages(id)`, returns `{ data: { conversation, messages } }`.
+**`GET /chat/conversations/:id/messages`** - Calls `getConversationMessages(id)`, returns `{ data: { conversation, messages } }`.
 
-**`POST /chat/message`** — Rate-limited via `express-rate-limit`:
+**`POST /chat/message`** - Rate-limited via `express-rate-limit`:
 
 ```ts
 const messageLimiter = rateLimit({
@@ -168,7 +168,7 @@ The route:
 
 ### 2.4 Service Layer
 
-#### `chat.service.ts` — Core chat orchestration
+#### `chat.service.ts` - Core chat orchestration
 
 ```
 handleMessage(message, sessionId?)
@@ -184,34 +184,34 @@ handleMessage(message, sessionId?)
   │
   ├─ 4. prisma.message.findMany (full history, ordered by timestamp)
   │
-  ├─ 5. generateReply(history, message) — always returns string, never throws
+  ├─ 5. generateReply(history, message) - always returns string, never throws
   │
   ├─ 6. prisma.message.create({ role: 'agent', content: reply })
   │
   └─ 7. Return { reply, sessionId: conversation.id }
 ```
 
-Key design: The LLM call **never throws** — all errors are caught internally and returned as user-friendly strings. This guarantees data consistency without needing Prisma transactions. The user message is always saved, and the AI reply is always saved (even if the content is an error message).
+Key design: The LLM call **never throws** - all errors are caught internally and returned as user-friendly strings. This guarantees data consistency without needing Prisma transactions. The user message is always saved, and the AI reply is always saved (even if the content is an error message).
 
-**`getConversations()`** — `prisma.conversation.findMany` with `orderBy: { createdAt: 'desc' }`, `take: 50`, selecting only `id`, `title`, `createdAt`.
+**`getConversations()`** - `prisma.conversation.findMany` with `orderBy: { createdAt: 'desc' }`, `take: 50`, selecting only `id`, `title`, `createdAt`.
 
-**`getConversationMessages(conversationId)`** — First verifies the conversation exists (404 if not), then `prisma.message.findMany` with `orderBy: { timestamp: 'asc' }`, `take: 100`, selecting `id`, `conversationId`, `role`, `content`, `timestamp`. Returns `{ conversation, messages }`.
+**`getConversationMessages(conversationId)`** - First verifies the conversation exists (404 if not), then `prisma.message.findMany` with `orderBy: { timestamp: 'asc' }`, `take: 100`, selecting `id`, `conversationId`, `role`, `content`, `timestamp`. Returns `{ conversation, messages }`.
 
 ---
 
-#### `llm.service.ts` — OpenAI integration
+#### `llm.service.ts` - OpenAI integration
 
-**Client initialization** — Singleton pattern: `getClient()` creates the `OpenAI` instance lazily on first call using `env.openaiApiKey`.
+**Client initialization** - Singleton pattern: `getClient()` creates the `OpenAI` instance lazily on first call using `env.openaiApiKey`.
 
 **`generateReply(history, userMessage)`:**
 
-1. **No API key check** — Returns a friendly message if `OPENAI_API_KEY` is not set
-2. **Parallel fetch** — `Promise.all` loads the system prompt (via `prompt.service.ts`) and trims history to last 20 messages simultaneously
-3. **Role mapping** — Internal roles (`user` / `agent`) are mapped to OpenAI roles (`user` / `assistant`)
-4. **OpenAI call** — `gpt-4o-mini`, `max_tokens: 500`, `temperature: 0.7`, `REQUEST_TIMEOUT_MS: 15000`
-5. **Result** — Returns response content trimmed, or a fallback string if empty
+1. **No API key check** - Returns a friendly message if `OPENAI_API_KEY` is not set
+2. **Parallel fetch** - `Promise.all` loads the system prompt (via `prompt.service.ts`) and trims history to last 20 messages simultaneously
+3. **Role mapping** - Internal roles (`user` / `agent`) are mapped to OpenAI roles (`user` / `assistant`)
+4. **OpenAI call** - `gpt-4o-mini`, `max_tokens: 500`, `temperature: 0.7`, `REQUEST_TIMEOUT_MS: 15000`
+5. **Result** - Returns response content trimmed, or a fallback string if empty
 
-**Error handling — every path returns a string, never throws:**
+**Error handling - every path returns a string, never throws:**
 
 | Error | User-facing message |
 |---|---|
@@ -224,11 +224,11 @@ Key design: The LLM call **never throws** — all errors are caught internally a
 
 **`generateTitle(userMessage)`:**
 
-Separate lightweight OpenAI call using the same model (`gpt-4o-mini`) but with `max_tokens: 20`, `temperature: 0.3`. The system prompt asks for a 2–5 word title summarizing the user's intent. Falls back to `"New conversation"` on any error (including empty response or missing API key). Only invoked on the first message of a new conversation — never on existing conversations.
+Separate lightweight OpenAI call using the same model (`gpt-4o-mini`) but with `max_tokens: 20`, `temperature: 0.3`. The system prompt asks for a 2–5 word title summarizing the user's intent. Falls back to `"New conversation"` on any error (including empty response or missing API key). Only invoked on the first message of a new conversation - never on existing conversations.
 
 ---
 
-#### `prompt.service.ts` — System prompt builder
+#### `prompt.service.ts` - System prompt builder
 
 Fetches all policies from `PolicyRepository` and assembles the system prompt dynamically:
 
@@ -266,7 +266,7 @@ The strict scope limitation is enforced entirely via prompt instructions, not co
 
 ### 2.5 Repository Layer
 
-#### `policy.repository.ts` — Cached policy fetcher
+#### `policy.repository.ts` - Cached policy fetcher
 
 ```ts
 const CACHE_TTL = 5 * 60 * 1000;  // 5 minutes
@@ -282,7 +282,7 @@ This avoids a database read on every message while keeping policies editable (ch
 
 ### 2.6 Validation
 
-`server/src/validators/chat.validator.ts` — Zod schema:
+`server/src/validators/chat.validator.ts` - Zod schema:
 
 ```ts
 export const chatMessageSchema = z.object({
@@ -298,7 +298,7 @@ export const chatMessageSchema = z.object({
 
 ### 2.7 Error Handling
 
-`server/src/middleware/errorHandler.ts` — Custom `AppError` class:
+`server/src/middleware/errorHandler.ts` - Custom `AppError` class:
 
 ```ts
 export class AppError extends Error {
@@ -318,7 +318,7 @@ The consistent `{ reply, sessionId, error }` response shape ensures the frontend
 
 ### 2.8 Data Model
 
-`server/prisma/schema.prisma` — Three tables, PostgreSQL:
+`server/prisma/schema.prisma` - Three tables, PostgreSQL:
 
 **Conversation**
 | Field | Type | Notes |
@@ -338,7 +338,7 @@ The consistent `{ reply, sessionId, error }` response shape ensures the frontend
 | `timestamp` | `DateTime @default(now())` | |
 | `conversation` | `Conversation @relation` | |
 
-Index: `@@index([conversationId])` — fast lookups by conversation.
+Index: `@@index([conversationId])` - fast lookups by conversation.
 
 **StorePolicy**
 | Field | Type | Notes |
@@ -350,11 +350,11 @@ Index: `@@index([conversationId])` — fast lookups by conversation.
 | `createdAt` | `DateTime @default(now())` | |
 | `updatedAt` | `DateTime @updatedAt` | Auto-updated by Prisma |
 
-Field names (`role`/`content`, `agent` instead of `assistant`) mirror OpenAI's `ChatCompletionMessageParam` format — the mapping in `llm.service.ts` is trivial.
+Field names (`role`/`content`, `agent` instead of `assistant`) mirror OpenAI's `ChatCompletionMessageParam` format - the mapping in `llm.service.ts` is trivial.
 
 ### 2.9 Seed Data
 
-`server/prisma/seed.ts` — 9 policies covering common e-commerce scenarios. All content is India-specific:
+`server/prisma/seed.ts` - 9 policies covering common e-commerce scenarios. All content is India-specific:
 
 - INR pricing on shipping (₹49, ₹149, ₹249) and free-shipping threshold (₹499)
 - UPI (Google Pay, PhonePe, Paytm, BHIM, CRED), COD up to ₹10,000, EMI above ₹3,000
@@ -364,7 +364,7 @@ Field names (`role`/`content`, `agent` instead of `assistant`) mirror OpenAI's `
 - Phone: 1800-123-SPUR, WhatsApp: +91-98765-43210
 - Customer support email: support@spurshop.com
 
-Re-runnable — seeds with `deleteMany()` then `create()` on each topic.
+Re-runnable - seeds with `deleteMany()` then `create()` on each topic.
 
 ### 2.10 Test Suite
 
@@ -383,7 +383,7 @@ Re-runnable — seeds with `deleteMany()` then `create()` on each topic.
 
 ### 3.1 Framework
 
-SvelteKit with **Svelte 5 runes** (`$state`, `$derived`, `$effect`, `$props`). No Svelte stores — all state is component-local within `+page.svelte`. The entire app is a single page with no client-side routing besides URL query parameter updates.
+SvelteKit with **Svelte 5 runes** (`$state`, `$derived`, `$effect`, `$props`). No Svelte stores - all state is component-local within `+page.svelte`. The entire app is a single page with no client-side routing besides URL query parameter updates.
 
 ### 3.2 State Design
 
@@ -431,11 +431,11 @@ let activeMessages = $derived(
 │   ├── WelcomeScreen (showWelcome && !activeConversationId)
 │   ├── Message list (activeMessages.length > 0)
 │   │   ├── ChatMessage × N
-│   │   ├── Error banner (failedMessage — amber countdown or red retry)
-│   │   └── Typing indicator (isTyping && !failedMessage — 3 dots + avatar)
+│   │   ├── Error banner (failedMessage - amber countdown or red retry)
+│   │   └── Typing indicator (isTyping && !failedMessage - 3 dots + avatar)
 │   ├── Empty state ("No messages yet")
 │   └── "Scroll to end" button (!isNearBottom && activeMessages.length > 0)
-└── MessageComposer ({#key activeConversationId} — destroys/remounts on switch)
+└── MessageComposer ({#key activeConversationId} - destroys/remounts on switch)
 ```
 
 ### 3.4 Component Details
@@ -488,7 +488,7 @@ Layout per message: name line → bubble + avatar → timestamp + copy icon
 - **Character counter**: appears only after first keystroke (`{#if charCount > 0}`). Gray (`text-surface-400`) normally, `font-medium text-red-500` only when over 10,000 limit
 - **Over-limit state**: `border-red-300 bg-red-50` on textarea, send button disabled
 - **Disabled state**: send button gets `disabled:opacity-40` when `disabled`, `overLimit`, or `!text.trim()`
-- **`{#key activeConversationId}`** in `+page.svelte` — destroys and remounts this component on conversation switch, which resets `text` to empty string automatically
+- **`{#key activeConversationId}`** in `+page.svelte` - destroys and remounts this component on conversation switch, which resets `text` to empty string automatically
 
 ### 3.5 Optimistic UI Flow
 
@@ -513,7 +513,7 @@ sendMessage(text)
   │
   ├─ ON SUCCESS:
   │   ├─ If was new conversation:
-  │   │     loadConversations() — refreshes sidebar with generated title
+  │   │     loadConversations() - refreshes sidebar with generated title
   │   │     Replace temp ID → real sessionId, update URL
   │   │     Transfer messages from temp key to real key
   │   │     Delete temp key from messagesByConversation
@@ -561,7 +561,7 @@ catch (e)
 **UI states**:
 - Rate-limit active (`retryAfter > 0`): Amber banner (`bg-amber-50 text-amber-700`) with info icon, "{errorBody} You can try again in **{N}s**."
 - Retry ready (`retryAfter === 0`): Red banner (`bg-red-50 text-red-600`) with warning icon, "Your previous message wasn't processed." + "Retry Message" button
-- Typing indicator: `{#if isTyping && !failedMessage}` — hidden during errors
+- Typing indicator: `{#if isTyping && !failedMessage}` - hidden during errors
 
 **`retryMessage(msgId)`**: Removes the failed message from `messagesByConversation` by index (preserving message order), clears `failedMessage`, clears `retryCountdown`, and re-calls `sendMessage(text)` with the original text.
 
@@ -583,7 +583,7 @@ if (urlId) {
 loadConversations();
 ```
 
-`replaceState` keeps browser history clean — back button returns to the previous app state, not the previous conversation.
+`replaceState` keeps browser history clean - back button returns to the previous app state, not the previous conversation.
 
 ### 3.8 Mobile Responsiveness
 
@@ -596,8 +596,8 @@ Breakpoint: `lg` (1024px).
 **Mobile/tablet** (below `lg`):
 - Sidebar is hidden by default
 - Hamburger button in header opens an overlay:
-  - `fixed inset-0 z-40 bg-black/40` — semi-transparent backdrop
-  - `fixed inset-y-0 left-0 z-50 w-[260px]` — sidebar slides from left
+  - `fixed inset-0 z-40 bg-black/40` - semi-transparent backdrop
+  - `fixed inset-y-0 left-0 z-50 w-[260px]` - sidebar slides from left
   - Close (X) button inside the overlay panel (`absolute right-3 top-3`)
   - Backdrop click → `sidebarOpen = false`
   - Conversation select → `sidebarOpen = false`
@@ -652,7 +652,7 @@ export interface Message {
 }
 ```
 
-Mirrors the Prisma schema as plain TypeScript interfaces. No shared type package — the frontend defines its own types independently.
+Mirrors the Prisma schema as plain TypeScript interfaces. No shared type package - the frontend defines its own types independently.
 
 ---
 
@@ -713,7 +713,7 @@ MessageComposer.handleSend()
     │   ├─ isTyping = false
     │   └─ Auto-scroll if near bottom
     │
-    ├─ ON FAILURE (429 — rate limited):
+    ├─ ON FAILURE (429 - rate limited):
     │   ├─ retryAfter = Math.max(30, parseInt(Retry-After header, 10))
     │   ├─ failedMessage.body = error message
     │   ├─ Amber countdown banner shows: "{body} You can try again in {N}s."
