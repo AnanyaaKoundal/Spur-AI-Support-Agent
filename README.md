@@ -2,6 +2,8 @@
 
 An AI-powered customer support application built for an e-commerce store. The project combines a SvelteKit frontend, an Express backend, PostgreSQL, Prisma, and OpenAI to provide conversational support while maintaining a clean and extensible architecture.
 
+**Live Demo: https://spur-ai-support-agent-beta.vercel.app/**
+
 ## Contents
 
 | Section | Description |
@@ -368,6 +370,11 @@ The test suite currently contains approximately twenty tests built using Vitest 
 
 The frontend, backend, and database are deployed independently. This allows each layer to be updated, scaled, and maintained without impacting the others.
 
+### Deployment Notes
+
+The backend is hosted on Render's free tier. When the service has been idle, the first request may experience a cold-start delay of up to approximately one minute while the backend instance wakes up.
+Subsequent requests respond normally once the service is active.
+
 ---
 
 ## Key Trade Offs
@@ -378,6 +385,7 @@ The frontend, backend, and database are deployed independently. This allows each
 | 5-minute policy cache            | Reduced DB load                | Policy updates are not immediately visible      |
 | Bounded context window           | Predictable cost and latency   | Older conversation context eventually drops out |
 | Dedicated chat workspace         | Better conversation management | Less compact than embedded widget               |
+| No authentication                | Reduced implementation scope   | Conversations are not isolated per user         |
 | Fixed page limits                | Simpler implementation         | Less scalable than cursor pagination            |
 
 ---
